@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>博多天神落語まつりアーカイブ</title>
+
+<style>
+:root{
+    --bg:#f5f5f5;
+    --card:#ffffff;
+    --text:#222;
+    --border:#ddd;
+    --link:#1565c0;
+}
+
+@media (prefers-color-scheme: dark){
+    :root{
+        --bg:#111;
+        --card:#1e1e1e;
+        --text:#eee;
+        --border:#444;
+        --link:#7ab7ff;
+    }
+}
+
+*{
+    box-sizing:border-box;
+}
+
+body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+
+header{
+    background:#222;
+    color:white;
+    padding:16px;
+}
+
+main{
+    max-width:1400px;
+    margin:auto;
+    padding:20px;
+}
+
+.card{
+    background:var(--card);
+    border-radius:8px;
+    padding:16px;
+    margin-bottom:16px;
+    border:1px solid var(--border);
+}
+
+button{
+    padding:8px 12px;
+    margin:4px;
+    cursor:pointer;
+}
+
+input{
+    padding:8px;
+    width:300px;
+    max-width:100%;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+th,td{
+    padding:8px;
+    border:1px solid var(--border);
+}
+
+th{
+    background:rgba(128,128,128,.15);
+}
+
+a{
+    color:var(--link);
+    cursor:pointer;
+}
+
+.rank{
+    margin:6px 0;
+}
+
+.stat{
+    display:inline-block;
+    margin-right:20px;
+    font-size:18px;
+    font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>博多天神落語まつりアーカイブ</h1>
+</header>
+
+<main>
+
+<div class="card">
+
+<input id="searchText" placeholder="出演者・演目・会場・公演検索">
+
+<button onclick="searchData()">検索</button>
+<button onclick="showPerformerRanking()">出演者ランキング</button>
+<button onclick="showStoryRanking()">演目ランキング</button>
+<button onclick="showVenueIndex()">会場別表示</button>
+<button onclick="showPerformanceIndex()">公演別表示</button>
+<button onclick="showDashboard()">ダッシュボード</button>
+
+</div>
+
+<div id="content"></div>
+
+</main>
+
+<script>
+    
+async function loadCSV(){
+    const response = await fetch("rakugo_stories.csv");
+    const csv = await response.text();
+
+    const lines = csv
+        .trim()
+        .split(/\r?\n/)
+        .filter(x=>x.trim());
+
+    const headers = lines.shift().split(",");
+
+    return lines.map(line=>{
+
+        const cols = line.split(",");
+
+        const obj = {};
+
+        headers.forEach((h,i)=>{
+            obj[h.trim()] = (cols[i]||"").trim();
+        });
+
+        return obj;
+    });
+}
+
+const content = document.getElementById("content");
+
+
+function renderTable(rows){
+
+    if(!rows.length){
+        content.innerHTML="<div class='card'>該当データなし</div>";
+        return;
+    }
+
+    let html="<div class='card'><table>";
+
+    html+="<tr>";
+
+    Object.keys(rows[0]).forEach(k=>{
+        html+=`<th>${k}</th>`;
+    });
+
+    html+="</tr>";
+
+    rows.forEach(row=>{
+
+        html+="<tr>";
+
+        Object.keys(rows[0]).forEach(key=>{
+
+            let value=row[key] ?? "";
+
+            if(key==="出演者" && value){
+                value=`<a onclick="showPerformer('${escapeQuotes(value)}')">${value}</a>`;
+            }
+
+            if(key==="演目" && value){
+                value=`<a onclick="showStory('${escapeQuotes(value)}')">${value}</a>`;
+            }
+
+            html+=`<td>${value}</td>`;
+        });
+
+        html+="</tr>";
+    });
+
+    html+="</table></div>";
+
+    content.innerHTML=html;
+}
+
+
+function escapeQuotes(x){
+    return x.replace(/'/g,"\\'");
+}
+
+
+function searchData(){
+
+    const keyword =
+        document.getElementById("searchText")
+        .value
+        .trim();
+
+    const result =
+        DATA.filter(r =>
+            JSON.stringify(r)
+            .includes(keyword)
+        );
+
+    renderTable(result);
+}
+
+
+function countField(field){
+
+    const counts = {};
+
+    DATA.forEach(r=>{
+
+        const v = r[field];
+
+        if(!v) return;
+
+        counts[v] = (counts[v] || 0) + 1;
+    });
+
+    return Object.entries(counts)
+        .sort((a,b)=>b[1]-a[1]);
+}
+
+
+function showPerformerRanking(){
+
+    const ranking = countField("出演者");
+
+    let html =
+    `<div class="card">
+        <h2>出演者ランキング</h2>`;
+
+    ranking.forEach(([name,count],i)=>{
+
+        html += `
+        <div class="rank">
+            ${i+1}位　
+            <a onclick="showPerformer('${escapeQuotes(name)}')">
+                ${name}
+            </a>
+            (${count}回)
+        </div>`;
+    });
+
+    html += "</div>";
+
+    content.innerHTML = html;
+}
+
+
+function showStoryRanking(){
+
+    const ranking = countField("演目");
+
+    let html =
+    `<div class="card">
+        <h2>演目ランキング</h2>`;
+
+    ranking.forEach(([name,count],i)=>{
+
+        html += `
+        <div class="rank">
+            ${i+1}位　
+            <a onclick="showStory('${escapeQuotes(name)}')">
+                ${name}
+            </a>
+            (${count}回)
+        </div>`;
+    });
+
+    html += "</div>";
+
+    content.innerHTML = html;
+}
+
+
+function showPerformer(name){
+
+    const rows =
+        DATA.filter(x =>
+            x["出演者"]===name
+        );
+
+    let html = `
+    <div class="card">
+        <h2>${name}</h2>
+        <div class="stat">
+            出演回数 ${rows.length}
+        </div>
+    </div>`;
+
+    content.innerHTML = html;
+
+    renderTable(rows);
+}
+
+
+function showStory(title){
+
+    const rows =
+        DATA.filter(x =>
+            x["演目"]===title
+        );
+
+    let html = `
+    <div class="card">
+        <h2>${title}</h2>
+        <div class="stat">
+            上演回数 ${rows.length}
+        </div>
+    </div>`;
+
+    content.innerHTML = html;
+
+    renderTable(rows);
+}
+
+
+function showVenueIndex(){
+
+    const venues =
+        [...new Set(
+            DATA.map(x=>x["会場"])
+        )];
+
+    let html =
+    `<div class="card">
+        <h2>会場一覧</h2>`;
+
+    venues.forEach(v=>{
+
+        const count =
+            DATA.filter(x =>
+                x["会場"]===v
+            ).length;
+
+        html += `
+        <div>
+            <a onclick="showVenue('${escapeQuotes(v)}')">
+                ${v}
+            </a>
+            (${count})
+        </div>`;
+    });
+
+    html += "</div>";
+
+    content.innerHTML = html;
+}
+
+
+function showVenue(name){
+
+    renderTable(
+        DATA.filter(x =>
+            x["会場"]===name
+        )
+    );
+}
+
+
+function showPerformanceIndex(){
+
+    const list =
+        [...new Set(
+            DATA.map(x=>x["公演"])
+        )];
+
+    let html =
+    `<div class="card">
+        <h2>公演一覧</h2>`;
+
+    list.forEach(v=>{
+
+        html += `
+        <div>
+            <a onclick="showPerformance('${escapeQuotes(v)}')">
+                ${v}
+            </a>
+        </div>`;
+    });
+
+    html += "</div>";
+
+    content.innerHTML = html;
+}
+
+
+function showPerformance(code){
+
+    renderTable(
+        DATA.filter(x =>
+            x["公演"]===code
+        )
+    );
+}
+
+
+function showDashboard(){
+
+    const performers =
+        new Set(
+            DATA.map(x=>x["出演者"])
+        ).size;
+
+    const stories =
+        new Set(
+            DATA.map(x=>x["演目"])
+            .filter(Boolean)
+        ).size;
+
+    const venues =
+        new Set(
+            DATA.map(x=>x["会場"])
+        ).size;
+
+    const performances =
+        new Set(
+            DATA.map(x=>x["公演"])
+        ).size;
+
+    content.innerHTML = `
+    <div class="card">
+        <h2>ダッシュボード</h2>
+
+        <div class="stat">
+            公演数 ${performances}
+        </div>
+
+        <div class="stat">
+            会場数 ${venues}
+        </div>
+
+        <div class="stat">
+            出演者数 ${performers}
+        </div>
+
+        <div class="stat">
+            演目数 ${stories}
+        </div>
+    </div>`;
+}
+let DATA = [];
+
+(async () => {
+
+    DATA = await loadCSV();
+
+    showDashboard();
+
+})();
+
+
+</script>
+
+</body>
+</html>
