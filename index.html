@@ -31,7 +31,7 @@
 *{
     box-sizing:border-box;
 }
-h1,h2{
+h1,h2,h3,p{
     margin: 0;
 }
 body{
@@ -56,7 +56,7 @@ main{
 .card{
     background:var(--card);
     border-radius:8px;
-    padding:16px;
+    padding:0 16px;
     border:1px solid var(--border);
 }
 
@@ -75,6 +75,7 @@ input{
 table{
     width:100%;
     border-collapse:collapse;
+    margin-bottom: 2em;
 }
 
 th,td{
@@ -101,6 +102,19 @@ a{
     font-size:18px;
     font-weight:bold;
 }
+.performanceCheck{
+    width:1em;
+}
+
+.actionbtn{
+    background:#1565c0;
+    color:white;
+    border:1px solid #0d47a1;
+}
+
+.actionbtn:hover{
+    background:#1976d2;
+}
 </style>
 </head>
 
@@ -114,13 +128,14 @@ a{
 
 <div class="card">
 
-<input id="searchText" placeholder="出演者・演目・会場・公演検索">
+<input id="searchText" placeholder="出演者・演目・会場・公演検索" onkeydown="if(event.key==='Enter'){searchData();}">
 
 <button onclick="searchData()">検索</button>
 <button onclick="showPerformerRanking()">出演者ランキング</button>
 <button onclick="showStoryRanking()">演目ランキング</button>
 <button onclick="showVenueIndex()">会場別表示</button>
 <button onclick="showPerformanceIndex()">公演別表示</button>
+<button onclick="showMultiPerformanceSelector()">複数公演表示</button>
 <button onclick="showDashboard()">ダッシュボード</button>
 
 </div>
@@ -131,32 +146,32 @@ a{
 
 <script>
 const PERFORMANCE = {
-    'F-1': { title: '20年目の幕開きでーす！', date: '2026/10/30' },
-    'N-1': { title: '南の光を浴びて実るぞ', date: '2026/10/30' },
-    'J-1': { title: '芸協会長にご馳走になる会', date: '2026/10/30' },
-    'F-2': { title: '招福寄席', date: '2026/10/31' },
-    'N-2': { title: 'こども寄席', date: '2026/10/31' },
-    'J-2': { title: '季節外れの節句で自酒', date: '2026/10/31' },
-    'F-3': { title: '上方落語に春が来た', date: '2026/10/31' },
-    'N-3': { title: '先輩の背中を見て育ちます', date: '2026/10/31' },
-    'J-3': { title: '君はどんな形の貯金箱？', date: '2026/10/31' },
-    'F-4': { title: '文が二つに治が二つで遊ぶ', date: '2026/11/01' },
-    'N-4': { title: 'もう好きにしてちょうだい', date: '2026/11/01' },
-    'J-4': { title: '小遊三神興を若手が担ぐ', date: '2026/11/01' },
-    'F-5': { title: '生粋の若旦那の蜜を吸う', date: '2026/11/01' },
-    'N-5': { title: '天神で桃組見ちゃおうよ', date: '2026/11/01' },
-    'J-5': { title: '落語ほど自由なものはない', date: '2026/11/01' },
-    'F-6': { title: '師匠！たっぷり願います', date: '2026/11/02' },
-    'N-6': { title: 'なんてったってアイドル？', date: '2026/11/02' },
-    'J-6': { title: '一花咲かせる落語まつり', date: '2026/11/02' },
-    'F-7': { title: '東西で陣地を取り合うぞ', date: '2026/11/02' },
-    'N-7': { title: '之輔なの？の輔なの？会？', date: '2026/11/02' },
-    'J-7': { title: '落語家だって人間だもの', date: '2026/11/02' },
-    'F-8': { title: '20年分の感謝を込める会', date: '2026/11/03' },
-    'N-8': { title: '菊の花がわんさかしらく3日', date: '2026/11/03' },
-    'J-8': { title: 'どうする？誰が古典やる？', date: '2026/11/03' },
-    'F-9': { title: '大きな花火を打ち上げよう', date: '2026/11/03' },
-    'J-9': { title: '感謝を落語の花束にして', date: '2026/11/03' }
+    'F-1': { title: '20年目の幕開きでーす！', date: '2026/10/30', start: '15:00' },
+    'N-1': { title: '南の光を浴びて実るぞ', date: '2026/10/30', start: '15:00' },
+    'J-1': { title: '芸協会長にご馳走になる会', date: '2026/10/30', start: '15:00' },
+    'F-2': { title: '招福寄席', date: '2026/10/31', start: '12:00' },
+    'N-2': { title: 'こども寄席', date: '2026/10/31', start: '12:00' },
+    'J-2': { title: '季節外れの節句で自酒', date: '2026/10/31', start: '12:00' },
+    'F-3': { title: '上方落語に春が来た', date: '2026/10/31', start: '16:00' },
+    'N-3': { title: '先輩の背中を見て育ちます', date: '2026/10/31', start: '16:00' },
+    'J-3': { title: '君はどんな形の貯金箱？', date: '2026/10/31', start: '16:00' },
+    'F-4': { title: '文が二つに治が二つで遊ぶ', date: '2026/11/01', start: '12:00' },
+    'N-4': { title: 'もう好きにしてちょうだい', date: '2026/11/01', start: '12:00' },
+    'J-4': { title: '小遊三神興を若手が担ぐ', date: '2026/11/01', start: '12:00' },
+    'F-5': { title: '生粋の若旦那の蜜を吸う', date: '2026/11/01', start: '16:00' },
+    'N-5': { title: '天神で桃組見ちゃおうよ', date: '2026/11/01', start: '16:00' },
+    'J-5': { title: '落語ほど自由なものはない', date: '2026/11/01', start: '16:00' },
+    'F-6': { title: '師匠！たっぷり願います', date: '2026/11/02', start: '12:00' },
+    'N-6': { title: 'なんてったってアイドル？', date: '2026/11/02', start: '12:00' },
+    'J-6': { title: '一花咲かせる落語まつり', date: '2026/11/02', start: '12:00' },
+    'F-7': { title: '東西で陣地を取り合うぞ', date: '2026/11/02', start: '16:00' },
+    'N-7': { title: '之輔なの？の輔なの？会？', date: '2026/11/02', start: '16:00' },
+    'J-7': { title: '落語家だって人間だもの', date: '2026/11/02', start: '16:00' },
+    'F-8': { title: '20年分の感謝を込める会', date: '2026/11/03', start: '12:00' },
+    'N-8': { title: '菊の花がわんさかしらく3日', date: '2026/11/03', start: '12:00' },
+    'J-8': { title: 'どうする？誰が古典やる？', date: '2026/11/03', start: '12:00' },
+    'F-9': { title: '大きな花火を打ち上げよう', date: '2026/11/03', start: '16:00' },
+    'J-9': { title: '感謝を落語の花束にして', date: '2026/11/03', start: '16:00' }
 };
 const skipKeys = ["公演回", "順"];
 async function loadCSV(){
@@ -187,74 +202,102 @@ async function loadCSV(){
 const content = document.getElementById("content");
 
 
-function renderTable(rows){
+function renderTable(rows, hideColumns = [], showDate = true, append = false){
 
-    if(!rows.length){
-        content.innerHTML="<div class='card'>該当データなし</div>";
-        return;
-    }
-
-    let html="<div class='card'><table>";
-
-    html+="<tr>";
-
-    Object.keys(rows[0])
-    .filter(key => !skipKeys.includes(key))
-    .forEach(k=>{
-        html+=`<th>${k}</th>`;
-    });
-
-    html+="</tr>";
-
-    rows.forEach(row=>{
-
-        html+="<tr>";
-        
-        const renderCell = {
-            '出演者': (val) => `<a onclick="showPerformer('${escapeQuotes(val)}')">${val}</a>`,
-            '演目': (val) => `<a onclick="showStory('${escapeQuotes(val)}')">${val}</a>`,
-            '公演': (val) => `<a onclick="showPerformance('${escapeQuotes(val)}')">${val}</a>`,
-            '会場': (val) => `<a onclick="showVenueIndex('${escapeQuotes(val)}')">${val}</a>`,
-        };
-
-        Object.keys(rows[0])
-            .filter(key => !skipKeys.includes(key))
-            .forEach(key=>{
-            let value = row[key] ?? "";
-
-            const content = renderCell[key]?.(value) ?? value;
-
-            html+=`<td>${content}</td>`;
-        });
-
-        html+="</tr>";
-    });
-
-    html+="</table></div>";
-
-    content.innerHTML=html;
+if(!rows.length){
+    content.innerHTML +=
+        "<div class='card'>該当データなし</div>";
+    return;
 }
 
+let html =
+    "<div class='card'><table>";
+
+html += "<tr>";
+
+const headers =
+    Object.keys(rows[0])
+    .filter(key =>
+        !skipKeys.includes(key) &&
+        !hideColumns.includes(key)
+    );
+if(showDate){
+    html += "<th>日付</th>";
+}
+headers.forEach(k=>{
+    html += `<th>${k}</th>`;
+});
+
+html += "</tr>";
+
+rows.forEach(row=>{
+
+    html += "<tr>";
+    if(showDate){
+        html += `<td>${
+            PERFORMANCE[row["公演"]]?.date ?? ""
+        }</td>`;
+    }
+    const renderCell = {
+
+        "出演者": val =>
+            `<a onclick="showPerformer('${escapeQuotes(val)}')">${val}</a>`,
+
+        "演目": val =>
+            `<a onclick="showStory('${escapeQuotes(val)}')">${val}</a>`,
+
+        "公演": val =>
+            `<a onclick="showPerformance('${escapeQuotes(val)}')">${val}</a>`,
+
+        "会場": val =>
+            `<a onclick="showVenue('${escapeQuotes(val)}')">${val}</a>`
+    };
+
+    headers.forEach(key=>{
+
+        const value = row[key] ?? "";
+
+        html += `<td>${
+            renderCell[key]?.(value) ?? value
+        }</td>`;
+    });
+
+    html += "</tr>";
+});
+
+html += "</table></div>";
+if(append){
+    content.innerHTML += html;
+}else{
+    content.innerHTML = html;
+}
+}
 
 function escapeQuotes(x){
     return x.replace(/'/g,"\\'");
 }
 
-
 function searchData(){
 
-    const keyword =
-        document.getElementById("searchText")
-        .value
-        .trim();
+const keyword =
+    document.getElementById("searchText")
+    .value
+    .trim();
 
-    const result =
-        DATA.filter(r =>
-            JSON.stringify(r)
-            .includes(keyword)
-        );
+const result =
+    DATA.filter(r =>
+        JSON.stringify(r)
+        .includes(keyword)
+    );
 
-    renderTable(result);
+content.innerHTML = `
+<div class="card">
+    <h2>検索結果</h2>
+    <p>${result.length}件</p>
+</div>
+`;
+
+renderTable(result);
 }
 
 
@@ -330,43 +373,50 @@ function showStoryRanking(){
 
 function showPerformer(name){
 
-    const rows =
-        DATA.filter(x =>
-            x["出演者"]===name
-        );
+const rows =
+    DATA.filter(x =>
+        x["出演者"] === name);
 
-    let html = `
-    <div class="card">
-        <h2>${name}</h2>
-        <div class="stat">
-            出演回数 ${rows.length}
-        </div>
-    </div>`;
+content.innerHTML = `
+<div class="card">
 
-    content.innerHTML = html;
+    <h2>${name}</h2>
 
-    renderTable(rows);
+    <p>
+        出演回数 ${rows.length}回
+    </p>
+
+</div>
+`;
+
+renderTable(
+    rows,
+    ["出演者"]
+);
 }
-
 
 function showStory(title){
 
-    const rows =
-        DATA.filter(x =>
-            x["演目"]===title
-        );
+const rows =
+    DATA.filter(x =>
+        x["演目"] === title);
 
-    let html = `
-    <div class="card">
-        <h2>${title}</h2>
-        <div class="stat">
-            上演回数 ${rows.length}
-        </div>
-    </div>`;
+content.innerHTML = `
+<div class="card">
 
-    content.innerHTML = html;
+    <h2>${title}</h2>
 
-    renderTable(rows);
+    <p>
+        上演回数 ${rows.length}回
+    </p>
+
+</div>
+`;
+
+renderTable(
+    rows,
+    ["演目"]
+);
 }
 
 
@@ -405,11 +455,23 @@ function showVenueIndex(){
 
 function showVenue(name){
 
-    renderTable(
-        DATA.filter(x =>
-            x["会場"]===name
-        )
-    );
+const rows =
+    DATA.filter(x =>
+        x["会場"] === name);
+
+content.innerHTML = `
+<div class="card">
+
+    <h2>${name}</h2>
+
+    <div class="stat">
+        出演数 ${rows.length}
+    </div>
+
+</div>
+`;
+
+renderTable(rows, ["会場"]);
 }
 
 
@@ -443,14 +505,141 @@ function showPerformanceIndex(){
 
 function showPerformance(code){
 
-    renderTable(
-        DATA.filter(x =>
-            x["公演"]===code
-        )
-    );
+const rows =
+    DATA.filter(x =>
+        x["公演"] === code);
+
+const info =
+    PERFORMANCE[code] || {};
+
+const venue =
+    rows[0]?.["会場"] ?? "";
+
+content.innerHTML = `
+<div class="card">
+
+    <h2>${code}</h2>
+
+    <h3>${info.title ?? ""}</h3>
+
+    <p>
+        ${info.date ?? ""}
+        ${info.start ?? ""}
+        開演
+    </p>
+
+    <p>
+        ${venue}
+    </p>
+
+</div>
+`;
+
+renderTable(rows, ["公演","会場"], false);
+}
+function showMultiPerformanceSelector(){
+
+const list =
+    [...new Set(
+        DATA.map(x => x["公演"])
+    )];
+
+let html = `
+<div class="card">
+
+    <button class="actionbtn" onclick="showSelectedPerformances()">
+        選択完了
+    </button>
+`;
+
+list.forEach(code => {
+
+    const info =
+        PERFORMANCE[code] || {};
+
+    html += `
+    <div>
+
+        <label>
+
+            <input
+                type="checkbox"
+                class="performanceCheck"
+                value="${code}">
+
+            ${code}
+            ${info.title ?? ""}
+
+        </label>
+
+    </div>
+    `;
+});
+
+html += `
+</div>
+`;
+
+content.innerHTML = html;
 }
 
+function showSelectedPerformances(){
 
+const selected =
+    [...document.querySelectorAll(
+        ".performanceCheck:checked"
+    )]
+    .map(x => x.value);
+
+if(selected.length === 0){
+
+    content.innerHTML = `
+    <div class="card">
+        公演を選択してください
+    </div>
+    `;
+
+    return;
+}
+
+content.innerHTML = "";
+
+selected.forEach(code => {
+
+    const rows =
+        DATA.filter(x =>
+            x["公演"] === code);
+
+    const info =
+        PERFORMANCE[code] || {};
+
+    const venue =
+        rows[0]?.["会場"] ?? "";
+
+    content.innerHTML += `
+    <div class="card">
+
+        <h3>${info.title ?? ""}</h3>
+
+        <p>
+            ${info.date ?? ""}
+            ${info.start ?? ""}
+            開演
+            ${venue}
+        </p>
+
+    </div>
+    `;
+
+    renderTable(
+        rows,
+        ["公演", "会場"],
+        false,
+        true
+    );
+
+});
+}
 function showDashboard(){
 
     const performers =
